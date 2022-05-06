@@ -7,8 +7,8 @@
 [![Coverage](https://img.shields.io/codecov/c/github/trashbyte/binder/master.svg)](https://codecov.io/gh/trashbyte/binder)
 ![doc coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fdoc-coverage.s3-us-west-2.amazonaws.com%2Fbinder.json)
 
-A simple, zero-dependency property-binding framework. Designed to use
-[imgui-rs](https://github.com/imgui-rs/imgui-rs) without drowning in mutable
+A simple, zero-dependency property-binding framework. It was originally designed
+to use [imgui-rs](https://github.com/imgui-rs/imgui-rs) without drowning in mutable
 references to everything and constantly fighting with the borrow checker.
 It uses internal mutability and runtime borrow checking to avoid lifetime
 issues. Designed to be fully memory- and thread-safe, although there might be

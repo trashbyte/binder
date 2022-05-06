@@ -1,3 +1,43 @@
+//! A simple, zero-dependency property-binding framework. It was originally designed to use
+//! [imgui-rs](https://github.com/imgui-rs/imgui-rs) without drowning in mutable references to
+//! everything and constantly fighting with the borrow checker.
+//!
+//! # Usage
+//!
+//! [bind()](Property::bind) can be called on an immutable `&Property` to get a mutable binding.
+//! The [PropertyBinding] returned by `bind()` [Deref](std::ops::Deref)s to `&T` and
+//! [DerefMut](std::ops::DerefMut)s to `&mut T`. The binding needs to be referenced mutably for
+//! [DerefMut](std::ops::DerefMut), so rust's borrow checker enforces exclusive mutable access
+//! XOR muliple immutable access to the binding itself. The binding unbinds itself when
+//! [Drop](std::ops::Drop)ped, so it is automatically freed when it exits scope.
+//!
+//! ### Example
+//!
+//! ```rust
+//! # mod imgui { pub struct Ui; impl Ui { pub fn slider(&self, _: &str, _: &mut f32) {} } }
+//! pub struct PropHaver {
+//!     pub prop: binder::Property<f32>
+//! }
+//! fn use_prop(p: &PropHaver, ui: &imgui::Ui) {
+//!     ui.slider("wow what a cool slider", &mut p.prop.bind());
+//! }
+//! ```
+//!
+//! # Safety
+//!
+//! `Property` owns its value and maintains its own invariants over that value. Properties cannot
+//! be bound more than once at the same time. The thread-safe [AtomicBool](std::sync::atomic::AtomicBool)
+//! is used to synchronize access to the binding, so it should be fully thread-safe as well.
+//!
+//! Properties CANNOT be cloned to get more references to the same value. You can use
+//! [Rc](std::rc::Rc)`<Property>` or [Arc](std::sync::Arc)`<Property>` for that.
+//!
+//! # Panic
+//!
+//! [bind()](Property::bind) will panic if called on a `Property` that's already been bound
+//! elsewhere. Use [try_bind()](Property::try_bind) for a non-panicking version.
+
+
 use std::cell::UnsafeCell;
 use std::ops::{Deref, DerefMut};
 use std::ptr::NonNull;
@@ -44,44 +84,7 @@ impl<T> Drop for PropertyBinding<T> {
 
 unsafe impl<T: Send> Send for PropertyBinding<T> {}
 
-/// Used to define a bindable property. Designed to use
-/// [imgui-rs](https://github.com/imgui-rs/imgui-rs) without drowning in mutable references to
-/// everything and constantly fighting with the borrow checker.
-///
-/// # Usage
-///
-/// [bind](Property::bind)() can be called on an immutable `&Property` to get a mutable binding.
-/// The [PropertyBinding] returned by `bind()` [Deref](std::ops::Deref)s to `&T` and
-/// [DerefMut](std::ops::DerefMut)s to `&mut T`. The binding needs to be referenced mutably for
-/// [DerefMut](std::ops::DerefMut), so rust's borrow checker enforces exclusive mutable access
-/// XOR muliple immutable access to the binding itself. The binding unbinds itself when
-/// [Drop](std::ops::Drop)ped, so it is automatically freed when it exits scope.
-///
-/// ### Example
-///
-/// ```rust
-/// # mod imgui { pub struct Ui; impl Ui { pub fn slider(&self, _: &str, _: &mut f32) {} } }
-/// pub struct PropHaver {
-///     pub prop: binder::Property<f32>
-/// }
-/// fn use_prop(p: &PropHaver, ui: &imgui::Ui) {
-///     ui.slider("wow what a cool slider", &mut p.prop.bind());
-/// }
-/// ```
-///
-/// # Safety
-///
-/// `Property` owns its value and maintains its own invariants over that value. Properties cannot
-/// be bound more than once at the same time. The thread-safe [AtomicBool](std::sync::AtomicBool)
-/// is used to synchronize access to the binding, so it should be fully thread-safe as well.
-///
-/// Properties CANNOT be cloned to get more references to the same value. You can use
-/// [Rc<Property>](std::rc::Rc) or [Arc<Property>](std::sync::Arc) for that.
-///
-/// # Panic
-///
-/// [bind](Property::bind)() will panic if called on a `Property` that's already been bound
-/// elsewhere. Use [try_bind](Property::try_bind)`() -> Result` for a non-panicking version.
+/// Used to define a bindable property. See crate-level documentation for more details.
 #[derive(Debug)]
 pub struct Property<T> {
     property: UnsafeCell<T>,
@@ -96,10 +99,12 @@ impl<T> Property<T> {
             mut_lock: Arc::new(AtomicBool::new(false))
         }
     }
-}
 
-impl<T> Property<T> {
-    /// Attempts to bind the property. This will panic if the property is already bound!
+    /// Attempts to bind the property.
+    ///
+    /// # Panics
+    ///
+    /// This will panic if called while the property is already bound.
     pub fn bind(&self) -> PropertyBinding<T> {
         let was_locked = self.mut_lock.swap(true, Ordering::SeqCst);
         if was_locked {
@@ -111,9 +116,10 @@ impl<T> Property<T> {
         }
     }
 
-    /// Safer alternative to [bind](Property::bind). Returns
-    /// [Ok](core::result::Result::Ok)`(`[PropertyBinding]`<T>)` upon successful binding and
-    /// [Err(())](core::result::Result::Err) if the `Property` was already bound.
+    /// Safer alternative to [bind](Property::bind).
+    /// Returns [Ok](core::result::Result::Ok)([PropertyBinding\<T\>](PropertyBinding))
+    /// upon successful binding and [Err](core::result::Result::Err)(())
+    /// if the `Property` was already bound.
     pub fn try_bind(&self) -> Result<PropertyBinding<T>, ()> {
         let was_locked = self.mut_lock.swap(true, Ordering::SeqCst);
         if was_locked {
@@ -133,7 +139,7 @@ unsafe impl<T: Send + Sync> Sync for Property<T> {}
 
 
 // hack to run compile_fail doctests
-#[cfg(doc)]
-#[doc(hidden)]
-#[path = "../tests/tests.rs"]
-mod tests;
+// #[cfg(doc)]
+// #[doc(hidden)]
+// #[path = "../tests/tests.rs"]
+// mod tests;

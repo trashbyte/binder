@@ -1,6 +1,6 @@
 [package]
 name = "binder"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 license = "MIT"
 description = "A simple, zero-dependency property-binding framework."
@@ -10,3 +10,7 @@ documentation = "https://docs.rs/binder"
 readme = "README.md"
 keywords = ["property", "properties", "binding", "imgui"]
 categories = ["development-tools", "rust-patterns"]
+
+[lib]
+name = "binder"
+path = "src/lib.rs"
