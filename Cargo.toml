@@ -1,0 +1,12 @@
+[package]
+name = "binder"
+version = "0.0.1"
+edition = "2021"
+license = "MIT"
+description = "A simple, zero-dependency property-binding framework."
+homepage = "https://github.com/trashbyte/binder"
+repository = "https://github.com/trashbyte/binder"
+documentation = "https://docs.rs/binder"
+readme = "README.md"
+keywords = ["property", "properties", "binding", "imgui"]
+categories = ["development-tools", "rust-patterns"]
