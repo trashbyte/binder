@@ -1,0 +1,80 @@
+name: build
+
+on: [push]
+
+jobs:
+  build:
+    name: cargo build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build
+        run: cargo build --verbose
+  test:
+    name: cargo test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run tests
+        run: cargo test --all-targets --verbose
+  coverage:
+    name: test coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Run cargo-tarpaulin
+        uses: actions-rs/tarpaulin@v0.1
+        with:
+          version: '0.20.0'
+          args: '-- --test-threads 1'
+
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v2
+        continue-on-error: true
+
+      - run: mv cobertura.xml test-coverage.xml
+
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v1
+        with:
+          name: coverage-report
+          path: test-coverage.xml
+  doc-coverage:
+    name: doc-coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Run rustdoc and update coverage
+        run: |
+          RUSTDOCFLAGS="-Z unstable-options --show-coverage" cargo doc --no-deps > doc-coverage.txt && \
+          PERCENT=$( cat doc-coverage.txt | grep "| Total" | cut -d '|' -f 5 | sed -e 's/ *//g' ) && \
+          curl --header "Content-Type: application/json" --request POST --data "{\"name\":\"binder\",\"percent\":\"${PERCENT}\"}" https://4yvh5mu5bk.execute-api.us-west-2.amazonaws.com/test
+
+      - name: Archive doc coverage results
+        uses: actions/upload-artifact@v1
+        with:
+          name: coverage-report
+          path: doc-coverage.txt
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Run clippy
+        run: cargo clippy --all-features --all-targets
