@@ -15,8 +15,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: testspace-com/setup-testspace@v1
+        with:
+          domain: ${{ github.repository_owner }}
+
+      - name: Install nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+
       - name: Run tests
-        run: cargo test --all-targets --verbose
+        run: cargo test -- -Z unstable-options --format junit --nocapture > output.txt
+
+      - name: Parse test output
+        run: "python ${{ github.workspace }}/.github/parse-tests.py"
+
+      - name: Push result to Testspace
+        run: testspace tests.xml
   coverage:
     name: test coverage
     runs-on: ubuntu-latest
@@ -63,7 +79,7 @@ jobs:
       - name: Run rustdoc and update coverage
         run: |
           RUSTDOCFLAGS="-Z unstable-options --show-coverage" cargo doc --no-deps > doc-coverage.txt && \
-          PERCENT=$( cat doc-coverage.txt | grep "| Total" | cut -d '|' -f 5 | sed -e 's/ *//g' ) && \
+          PERCENT=$( cat doc-coverage.txt | grep "| Total" | python3 -c 'import sys; import re; print(re.search("(\\d{2,3})\\.\\d%", sys.stdin.readline()).group(1))' ) && \
           curl --header "Content-Type: application/json" --request POST --data "{\"name\":\"binder\",\"percent\":\"${PERCENT}\"}" https://4yvh5mu5bk.execute-api.us-west-2.amazonaws.com/test
 
       - name: Archive doc coverage results

@@ -1,11 +1,10 @@
 # Binder
 
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/trashbyte/binder/build?logo=github)
 [![Crates.io](https://img.shields.io/crates/v/binder)](https://crates.io/crates/binder)
-[![Docs.rs](https://docs.rs/binder/badge.svg)](https://docs.rs/binder/)
 ![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)
-![build](https://github.com/trashbyte/binder/workflows/build/badge.svg)
-[![Coverage](https://img.shields.io/codecov/c/github/trashbyte/binder/master.svg)](https://codecov.io/gh/trashbyte/binder)
-![doc coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fdoc-coverage.s3-us-west-2.amazonaws.com%2Fbinder.json)
+[![Docs.rs](https://img.shields.io/endpoint?url=https%3A%2F%2Fgist.githubusercontent.com%2Ftrashbyte%2F1cbfc846fa8473de52bf7beadf8e690d%2Fraw%2F8e78e0340c6c7d20a70e52210284d553ac0885b0%2Fcoverage-binder.json)](https://docs.rs/binder/)
+[![Test Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fgist.githubusercontent.com%2Ftrashbyte%2F1cbfc846fa8473de52bf7beadf8e690d%2Fraw%2F6061a221a5ed44082fc997a7cb70ce79dbf2c0b2%2Ftest-badge-binder.json)](https://codecov.io/gh/trashbyte/binder)
 
 A simple, zero-dependency property-binding framework. It was originally designed
 to use [imgui-rs](https://github.com/imgui-rs/imgui-rs) without drowning in mutable
